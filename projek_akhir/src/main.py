@@ -1,36 +1,97 @@
 from train_model import train_and_save_model
 from predict import predict_late
 from utils import load_dataset
+import os
+import pandas as pd
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def tampilkan_judul():
+    print("="*50)
+    print("  SISTEM PREDIKSI KETERLAMBATAN TUGAS MAHASISWA")
+    print("="*50)
+
+def tampilkan_menu():
+    print("\nPILIH MENU:")
+    print("1. Lihat Data Mahasiswa")
+    print("2. Latih Model")
+    print("3. Prediksi Mahasiswa Baru")
+    print("4. Keluar")
+
+def tampilkan_data():
+    df = load_dataset()
+    print("\nDATA MAHASISWA:")
+    print("-"*50)
+    try:
+        # Jika tabulate tersedia
+        print(df.to_markdown(index=False))
+    except ImportError:
+        # Jika tidak tersedia
+        print(df.to_string(index=False))
+    print("-"*50)
+
+
+def latih_model():
+    train_and_save_model()
+    print("\n✅ Model berhasil dilatih dan disimpan.")
+
+def prediksi_baru():
+    try:
+        nama = input("Nama Mahasiswa: ").strip()
+        if not nama:
+            raise ValueError("Nama tidak boleh kosong.")
+
+        x = []
+        for i in range(1, 6):
+            while True:
+                nilai = input(f"Tugas {i} (0 = Tepat Waktu, 1 = Terlambat): ")
+                if nilai in ['0', '1']:
+                    x.append(int(nilai))
+                    break
+                else:
+                    print("⚠️  Input harus 0 atau 1!")
+
+        hasil = predict_late(x)
+        status = "📌 TERLAMBAT" if hasil == 1 else "✅ TEPAT WAKTU"
+        print(f"\nHasil prediksi untuk {nama.upper()}: {status}")
+
+    except Exception as e:
+        print(f"❌ Terjadi kesalahan: {e}")
 
 def main():
     while True:
-        print("\n=== SISTEM PREDIKSI KETERLAMBATAN TUGAS ===")
-        print("1. Lihat Data")
-        print("2. Latih Model")
-        print("3. Prediksi Baru")
-        print("4. Keluar")
+        clear_screen()
+        tampilkan_judul()
+        tampilkan_menu()
 
-        pilihan = input("Pilih menu (1/2/3/4): ")
+        pilihan = input("\nMasukkan pilihan (1-4): ").strip()
 
         if pilihan == "1":
-            df = load_dataset()
-            print(df)
+            clear_screen()
+            tampilkan_judul()
+            tampilkan_data()
+            input("\nTekan ENTER untuk kembali ke menu...")
 
         elif pilihan == "2":
-            train_and_save_model()
-            print("Model berhasil dilatih dan disimpan.")
+            clear_screen()
+            tampilkan_judul()
+            latih_model()
+            input("\nTekan ENTER untuk kembali ke menu...")
 
         elif pilihan == "3":
-            x1 = int(input("Terlambat tugas 1 (0/1): "))
-            x2 = int(input("Terlambat tugas 2 (0/1): "))
-            x3 = int(input("Terlambat tugas 3 (0/1): "))
-            result = predict_late([x1, x2, x3])
-            print(">>> Prediksi:", "Terlambat" if result == 1 else "Tepat Waktu")
+            clear_screen()
+            tampilkan_judul()
+            prediksi_baru()
+            input("\nTekan ENTER untuk kembali ke menu...")
 
         elif pilihan == "4":
+            print("\nTerima kasih telah menggunakan sistem ini 🙏")
             break
+
         else:
-            print("Input tidak valid!")
+            print("❌ Pilihan tidak valid!")
+            input("Tekan ENTER untuk ulangi...")
 
 if __name__ == "__main__":
     main()
