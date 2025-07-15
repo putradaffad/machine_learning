@@ -91,51 +91,73 @@ prediksi_history = load_riwayat()
 def prediksi_baru():
     df = load_dataset()
     daftar_nim = sorted(df['NIM'].astype(str).tolist())
+    daftar_nama = sorted(df['nama'].tolist())
 
     window = Toplevel(root)
-    window.title("🔍 Form Prediksi Berdasarkan NIM")
-    window.geometry("500x330")
+    window.title("🔍 Form Prediksi Mahasiswa")
+    window.geometry("520x400")
     window.configure(bg="white")
 
-    tk.Label(window, text="Masukkan atau pilih NIM Mahasiswa", font=FONT_LABEL, bg="white").pack(pady=(20, 5))
+    tk.Label(window, text="Pilih metode pencarian:", font=FONT_LABEL, bg="white").pack(pady=(15, 5))
 
-    frame_input = tk.Frame(window, bg="white")
-    frame_input.pack(pady=5)
+    mode_var = tk.StringVar(value="NIM")
+    opsi_frame = tk.Frame(window, bg="white")
+    opsi_frame.pack()
 
-    # Input manual dan dropdown NIM
-    entry_nim = tk.Entry(frame_input, font=FONT_LABEL, width=25)
-    entry_nim.grid(row=0, column=0, padx=5)
+    tk.Radiobutton(opsi_frame, text="🔢 Berdasarkan NIM", variable=mode_var, value="NIM", bg="white").grid(row=0, column=0, padx=10)
+    tk.Radiobutton(opsi_frame, text="🧑 Berdasarkan Nama", variable=mode_var, value="Nama", bg="white").grid(row=0, column=1, padx=10)
 
-    combo_nim = ttk.Combobox(frame_input, values=daftar_nim, width=10, state="readonly")
-    combo_nim.grid(row=0, column=1, padx=5)
-    combo_nim.bind("<<ComboboxSelected>>", lambda e: entry_nim.delete(0, tk.END) or entry_nim.insert(0, combo_nim.get()))
+    input_frame = tk.Frame(window, bg="white")
+    input_frame.pack(pady=10)
 
-    # Proses prediksi setelah klik tombol
+    entry_input = tk.Entry(input_frame, font=FONT_LABEL, width=25)
+    entry_input.grid(row=0, column=0, padx=5)
+
+    combo_input = ttk.Combobox(input_frame, values=daftar_nim, width=15, state="readonly")
+    combo_input.grid(row=0, column=1, padx=5)
+    combo_input.bind("<<ComboboxSelected>>", lambda e: entry_input.delete(0, tk.END) or entry_input.insert(0, combo_input.get()))
+
+    # Update dropdown sesuai mode
+    def update_dropdown(*args):
+        if mode_var.get() == "NIM":
+            combo_input.config(values=daftar_nim)
+        else:
+            combo_input.config(values=daftar_nama)
+        entry_input.delete(0, tk.END)
+
+    mode_var.trace_add("write", update_dropdown)
+
     def proses_prediksi():
-        try:
-            nim = entry_nim.get().strip()
-            if not nim.isdigit():
-                raise ValueError("NIM harus berupa angka.")
+        from predict import predict_by_nim, predict_by_nama
 
-            # Panggil fungsi prediksi
-            hasil, nama, probabilitas, riwayat, persen_tepat = predict_by_nim(nim)
+        try:
+            input_val = entry_input.get().strip()
+            if not input_val:
+                raise ValueError("Input tidak boleh kosong.")
+
+            if mode_var.get() == "NIM":
+                if not input_val.isdigit():
+                    raise ValueError("NIM harus berupa angka.")
+                hasil, nama, probabilitas, riwayat, persen_tepat = predict_by_nim(input_val)
+                nim = input_val
+            else:
+                hasil, nama, nim, probabilitas, riwayat, persen_tepat = predict_by_nama(input_val)
+
             status = "🟢 TEPAT WAKTU" if hasil == 0 else "🔴 TERLAMBAT"
             warna = "#e6f4ea" if hasil == 0 else "#fdecea"
 
-            # Simpan ke riwayat
             prediksi_history.append((nim, nama, status, f"{probabilitas*100:.2f}%"))
             save_riwayat(prediksi_history)
 
-            # Tampilkan hasil prediksi
             hasil_window = Toplevel(window)
             hasil_window.title("📊 Hasil Prediksi")
             hasil_window.geometry("420x300")
             hasil_window.configure(bg=warna)
 
             tk.Label(hasil_window, text="📊 Hasil Prediksi Mahasiswa", font=FONT_HEADER, bg=warna).pack(pady=15)
-
             output = (
                 f"👤 Nama Mahasiswa  : {nama}\n"
+                f"🆔 NIM             : {nim}\n"
                 f"📝 Riwayat Tugas   : {riwayat}\n"
                 f"📌 Prediksi        : {status}\n"
                 f"🤖 Keyakinan Model : {probabilitas * 100:.2f}%\n"
@@ -153,12 +175,11 @@ def prediksi_baru():
 
     frame_btn = tk.Frame(window, bg="white")
     frame_btn.pack(pady=20)
-
-    # Tombol prediksi dan clear
     tk.Button(frame_btn, text="🔍 Prediksi", width=18, bg=BTN_COLOR, fg=BTN_TEXT_COLOR,
               font=FONT_LABEL, command=proses_prediksi).grid(row=0, column=0, padx=5)
     tk.Button(frame_btn, text="♻️ Clear", width=12, bg="#cccccc", font=FONT_LABEL,
-              command=lambda: entry_nim.delete(0, tk.END)).grid(row=0, column=1, padx=5)
+              command=lambda: entry_input.delete(0, tk.END)).grid(row=0, column=1, padx=5)
+
 
 # ========== Fungsi: Tampilkan Riwayat Prediksi ==========
 def tampilkan_riwayat():

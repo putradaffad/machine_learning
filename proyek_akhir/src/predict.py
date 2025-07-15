@@ -36,3 +36,28 @@ def predict_by_nim(nim):
 
     # Mengembalikan hasil prediksi, nama, probabilitas, riwayat keterlambatan, dan persentase tepat waktu
     return prediksi[0], nama, probabilitas, riwayat, persentase_tepat_waktu
+
+
+def predict_by_nama(nama):
+    df = load_dataset()
+    model = joblib.load('model/model.pkl')
+
+    # Cari nama yang cocok (case insensitive)
+    mahasiswa = df[df['nama'].str.lower() == nama.lower()]
+
+    if mahasiswa.empty:
+        raise ValueError("Nama tidak ditemukan dalam dataset.")
+
+    fitur = mahasiswa[['terlambat_1', 'terlambat_2', 'terlambat_3', 'terlambat_4', 'terlambat_5']]
+    nama = mahasiswa.iloc[0]['nama']
+    nim = mahasiswa.iloc[0]['NIM']
+    riwayat = fitur.iloc[0].tolist()
+
+    prediksi = model.predict(fitur)
+    semua_probabilitas = model.predict_proba(fitur)[0]
+    probabilitas = semua_probabilitas[prediksi[0]]
+
+    jumlah_tepat_waktu = riwayat.count(0)
+    persentase_tepat_waktu = (jumlah_tepat_waktu / len(riwayat)) * 100
+
+    return prediksi[0], nama, nim, probabilitas, riwayat, persentase_tepat_waktu
