@@ -1,6 +1,6 @@
 import os
-from train_model import train_and_save_model  # Fungsi untuk melatih dan menyimpan model
-from predict import predict_by_nim  # Fungsi untuk melakukan prediksi berdasarkan NIM
+from proyek_akhir.src.core.train_model import train_and_save_model  # Fungsi untuk melatih dan menyimpan model
+from proyek_akhir.src.core.predict import predict_by_nim  # Fungsi untuk melakukan prediksi berdasarkan NIM
 from utils import load_dataset, load_riwayat, save_riwayat  # Fungsi utilitas untuk data dan riwayat
 
 # ========== Riwayat Prediksi ==========
